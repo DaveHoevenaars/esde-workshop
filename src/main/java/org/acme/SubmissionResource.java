@@ -1,6 +1,7 @@
 package org.acme;
 
 import io.agroal.api.AgroalDataSource;
+import io.quarkus.agroal.DataSource;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -10,24 +11,16 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Path("/posts")
-public class PostResource {
+@Path("/submissions")
+public class SubmissionResource {
 
     @Inject
+    @DataSource("test")
     private AgroalDataSource defaultDataSource;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String index() {
-        // TODO implement index
-        return "hello";
-    }
-
-    @GET
-    @Consumes("text/plain")
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<Submission> view(@PathParam("id") int submissionId) throws SQLException {
+    public List<Submission> index() throws SQLException {
         List<Submission> submissions = new ArrayList<>();
         PreparedStatement ps = this.runSQL("SELECT * FROM submissions;");
         ResultSet rs = ps.getResultSet();
@@ -43,8 +36,26 @@ public class PostResource {
         return submissions;
     }
 
+    @GET
+    @Consumes("text/plain")
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Submission view(@PathParam("id") int submissionId) throws SQLException {
+        PreparedStatement ps = this.runSQL("SELECT * FROM submissions WHERE id = ?;", new String[]{String.valueOf(submissionId)});
+        ResultSet rs = ps.getResultSet();
+        if (!rs.next()) {
+            throw new SQLException();
+        }
+        int id = rs.getInt(1);
+        String imageUrl = rs.getString(2);
+        String comment = rs.getString(3);
+        String uploader = rs.getString(4);
+
+        return new Submission(id, imageUrl, comment, uploader);
+    }
+
     @POST
-    @Consumes("multipart/form-data")
+    @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(Submission submission) throws SQLException {
         PreparedStatement ps = this.runSQL("INSERT INTO submissions (imageUrl, comment, uploader) VALUES (?,?,?)", new String[]{submission.getImageUrl(), submission.getComment(), submission.getUploader()});
