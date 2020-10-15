@@ -1,31 +1,34 @@
 package org.acme;
 public class Submission {
 
-    private final int submissionId;
+    private int submissionId;
     private String imageUrl;
     private String comment;
     private String uploader;
+    private String token;
 
     public Submission() {
         this.submissionId = 0;
-        this.imageUrl ="";
+        this.imageUrl = "";
         this.comment = "";
-        this.uploader ="";
+        this.uploader = "";
+        this.token = "";
     }
 
-    public Submission(int submissionId, String imageUrl, String comment, String uploader) {
+    public Submission(int submissionId, String imageUrl, String comment, String uploader, String token) {
         this.submissionId = submissionId;
         this.imageUrl = imageUrl;
         this.comment = comment;
         this.uploader = uploader;
+        this.token = token;
     }
 
     public int getSubmissionId() {
         return submissionId;
     }
 
-    public Submission setSubmissionId(int id) {
-        return new Submission(id, this.imageUrl, this.comment, this.uploader);
+    public void setSubmissionId(int id) {
+        this.submissionId = id;
     }
 
     public String getUploader() {
@@ -50,5 +53,13 @@ public class Submission {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
