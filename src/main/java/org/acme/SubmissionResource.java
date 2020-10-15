@@ -41,6 +41,11 @@ public class SubmissionResource {
     @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(Submission submission) throws SQLException {
+        try {
+            validateSubmission(submission, "POST");
+        } catch (Exception e) {
+            return Response.status(400).entity(e.getMessage()).build();
+        }
         String token = Token.generateToken();
         submission.setToken(token);
         PreparedStatement ps = this.runSQL(
@@ -83,6 +88,11 @@ public class SubmissionResource {
     @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response update(Submission submission, @PathParam("id") int submissionId) throws SQLException {
+        try {
+            validateSubmission(submission, "PUT");
+        } catch (Exception e) {
+            return Response.status(400).entity(e.getMessage()).build();
+        }
         if (submissionId != submission.getSubmissionId()) {
             return Response.status(400).type("text/plain")
                     .entity("Bad request; Path ID does not match body ID").build();
@@ -124,6 +134,11 @@ public class SubmissionResource {
     @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(Submission submission, @PathParam("id") int submissionId) throws SQLException {
+        try {
+            validateSubmission(submission, "DELETE");
+        } catch (Exception e) {
+            return Response.status(400).entity(e.getMessage()).build();
+        }
         if (submissionId != submission.getSubmissionId()) {
             return Response.status(400).type("text/plain")
                     .entity("Bad request; Path ID does not match body ID").build();
@@ -153,6 +168,29 @@ public class SubmissionResource {
                 }
         );
         return Response.status(200).entity(submission).build();
+    }
+
+    public void validateSubmission(Submission submission, String method) throws Exception {
+        List<String> errors = new ArrayList<>();
+        if (!(method.equals("GET") || method.equals("POST"))) {
+            if (submission.getToken() == null || submission.getToken().equals("")) {
+                errors.add("token must be set");
+            }
+        }
+
+        if (submission.getImageUrl() == null || submission.getImageUrl().equals("")) {
+            errors.add("imageUrl must be set");
+        }
+        if (submission.getUploader() == null || submission.getUploader().equals("")) {
+            errors.add("uploader must be set");
+        }
+        if (submission.getComment() == null || submission.getComment().equals("")) {
+            errors.add("comment must be set");
+        }
+        if (errors.size() > 0) {
+            String errorMessages = errors.stream().reduce("", (s1, s2) -> {return s1 + "\n" + s2;});
+            throw new Exception(errorMessages);
+        }
     }
 
     public PreparedStatement runSQL(String sql) throws SQLException {
