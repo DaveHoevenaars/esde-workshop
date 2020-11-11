@@ -90,4 +90,4 @@ Please visit https://github.com/codelakegmbh/esde-workshop and clone the reposit
 
 ### API Specification
 We have created an openAPI specification for this project describing all relevant endpoints of our sample application.
-You can find the specification at: <a href="shorturl.at/cdvwO">shorturl.at/cdvwO</a>
+You can find the specification at: <a href="https://shorturl.at/cdvwO">shorturl.at/cdvwO</a>
