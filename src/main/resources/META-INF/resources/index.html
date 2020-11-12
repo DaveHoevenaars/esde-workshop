@@ -1,90 +1,174 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+            name="viewport"
+            content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
     >
     <meta
-      http-equiv="X-UA-Compatible"
-      content="ie=edge"
+            http-equiv="X-UA-Compatible"
+            content="ie=edge"
     >
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
 
     <title>ESDE - Quarkus Base</title>
 
     <style type="text/css">
+
+        * {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        button {
+            background-color: #7c0482;
+            color: #ffffff;
+            border-radius: 5px;
+            border: none;
+            padding: 10px 20px;
+        }
+
         img {
             width: 200px;
         }
+
+        .image-container {
+            width: 250px;
+            height: 250px;
+            padding: 25px;
+            -webkit-box-shadow: 2px 2px 10px 4px #D4D4D4;
+            box-shadow: 2px 2px 10px 4px #D4D4D4;
+            text-align: center;
+        }
+
+        .info-div {
+            background-color: #7c0482;
+            color: #ffffff;
+            padding: 10px 25px;
+        }
+
+        .image-url {
+            text-decoration: none;
+            color: #f5d742;
+            font-weight: bold;
+            display: inline;
+        }
+
+        .material-icons {
+            vertical-align: middle;
+        }
+
+        #fetch-wrapper {
+            display: grid;
+            padding-top: 50px;
+            width: 100%;
+            text-align: center;
+        }
+
+        #fetch-wrapper button {
+            width: 200px;
+            margin: 0 auto;
+        }
+
+        #image-list {
+            padding-top: 50px;
+            width: 100%;
+        }
+
     </style>
-  </head>
-  <body>
-    <div>
-      <h2>Submit new image</h2>
-      <div>
-        <p>
-          <label for="image-url">Image URL:</label>
-          <input
-            type="text"
-            id="image-url"
-          />
-        </p>
-      </div>
-      <div>
-        <p>
-          <label for="uploader">Uploader:</label>
-          <input
-            type="text"
-            id="uploader"
-          />
-        </p>
-      </div>
-      <div>
-        <p>
-          <label for="comment">Comment:</label>
-          <input
-            type="text"
-            id="comment"
-          />
-        </p>
-      </div>
-      <div>
-        <p><span id="token"></span></p>
-      </div>
-      <div>
-        <button id="submit">Submit</button>
-      </div>
-    </div>
-    <hr>
-    <div>
-      <h2>Delete submission</h2>
-      <div>
-        <p>
-          <label for="delete-id">ID:</label>
-          <input type="text" id="delete-id" />
-        </p>
-      </div>
-      <div>
-        <p>
-          <label for="delete-token">Token:</label>
-          <input type="text" id="delete-token" />
-        </p>
-      </div>
-      <div>
-        <button id="delete">Submit</button>
-      </div>
-    </div>
-    <hr>
+</head>
+<body>
+
+<table style="width: 25%; margin-left: 25%; float: left;">
+    <tr>
+        <td>
+            <h2>Submit new image</h2>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="image-url">Image URL:</label>
+        </td>
+        <td>
+            <input
+                    type="text"
+                    id="image-url"
+            />
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="uploader">Uploader:</label>
+        </td>
+        <td>
+            <input
+                    type="text"
+                    id="uploader"
+            />
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="comment">Comment:</label>
+        </td>
+        <td>
+            <input
+                    type="text"
+                    id="comment"
+            />
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <p><span id="token"></span></p>
+            <button id="submit">Submit</button>
+        </td>
+    </tr>
+</table>
+
+<table style="width: 25%; float: left;">
+    <tr>
+        <td>
+            <h2>Delete Submission</h2>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="delete-id">ID:</label>
+        </td>
+        <td>
+            <input type="text" id="delete-id"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="delete-token">Token:</label>
+        </td>
+        <td>
+            <input type="text" id="delete-token"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <p></p>
+            <button id="delete">Submit</button>
+        </td>
+    </tr>
+</table>
+
+<div id="fetch-wrapper">
     <button id="fetch-submissions">Fetch Submissions</button>
+</div>
 
-
-    <ul id="image-list"></ul>
-    <script
-      type="application/javascript"
-      crossorigin="anonymous"
-    >
-      (() => {
+<div id="image-list" style="display: grid; gap: 20px; grid-template-columns: repeat(7, 1fr)"></div>
+<script
+        type="application/javascript"
+        crossorigin="anonymous"
+>
+    (() => {
         const endpoint = 'http://127.0.0.1:8080';
 
         /**
@@ -94,97 +178,123 @@
          * @return {Promise<void>}
          */
         async function loadSubmissions(endpoint, submissionsList) {
-          const response            = await fetch(endpoint);
-          if (!response.ok) {
-            alert(`could not fetch images!<br>status code: ${response.status}`);
-            console.log(await response.text());
-            return;
-          }
-          const submissions         = await response.json();
-          submissionsList.innerHTML = '';
-          console.log(submissions);
-          for (const s of submissions) {
-            const imageDiv = document.createElement('div');
-            const infoDiv  = document.createElement('div');
-            {
-              const image = document.createElement('img');
-              image.src   = s.imageUrl;
-              imageDiv.appendChild(image);
+            const response = await fetch(endpoint);
+            if (!response.ok) {
+                alert(`could not fetch images!<br>status code: ${response.status}`);
+                console.log(await response.text());
+                return;
             }
-            {
-              const idSpan           = document.createElement('span');
-              const uploaderSpan     = document.createElement('span');
-              const imageUrlLink     = document.createElement('a');
-              idSpan.innerText       = `ID: ${s.submissionId}`;
-              uploaderSpan.innerText = `Uploader: ${s.uploader}`;
-              imageUrlLink.href      = s.imageUrl;
-              imageUrlLink.innerText = 'Source';
-              imageUrlLink.target    = '_blank';
+            const submissions = await response.json();
+            submissionsList.innerHTML = '';
+            console.log(submissions);
+            for (const s of submissions) {
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'image-container';
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'info-div';
+                {
+                    const image = document.createElement('img');
+                    image.src = s.imageUrl;
+                    image.alt = s.comment;
+                    imageDiv.appendChild(image);
+                }
+                {
+                    const idIcon = document.createElement('span');
+                    const idSpan = document.createElement('span');
+                    const uploaderIcon = document.createElement('span');
+                    const uploaderSpan = document.createElement('span');
+                    const commentIcon = document.createElement('span');
+                    const comment = document.createElement('span');
+                    const imageUrlIcon = document.createElement('span');
+                    const imageUrlLink = document.createElement('a');
+                    imageUrlLink.className = 'image-url';
+                    idIcon.className = `material-icons`;
+                    idIcon.innerText = `fingerprint`;
+                    idSpan.innerText = ` ID: ${s.submissionId}`;
+                    uploaderIcon.className = 'material-icons';
+                    uploaderIcon.innerText = `cloud_upload`;
+                    uploaderSpan.innerText = ` Uploader: ${s.uploader}`;
+                    commentIcon.className = `material-icons`;
+                    commentIcon.innerText = `comment`;
+                    comment.innerText = ` Comment: ${s.comment}`;
+                    imageUrlIcon.className = 'material-icons';
+                    imageUrlIcon.innerText = 'source';
+                    imageUrlLink.href = s.imageUrl;
+                    imageUrlLink.innerText = '[Source]';
+                    imageUrlLink.target = '_blank';
 
-              infoDiv.appendChild(idSpan);
-              infoDiv.appendChild(uploaderSpan);
-              infoDiv.appendChild(imageUrlLink);
+                    infoDiv.appendChild(idIcon);
+                    infoDiv.appendChild(idSpan);
+                    infoDiv.appendChild(document.createElement('br'));
+                    infoDiv.appendChild(uploaderIcon);
+                    infoDiv.appendChild(uploaderSpan);
+                    infoDiv.appendChild(document.createElement('br'));
+                    infoDiv.appendChild(commentIcon);
+                    infoDiv.appendChild(comment);
+                    infoDiv.appendChild(document.createElement('br'));
+                    infoDiv.appendChild(imageUrlIcon);
+                    infoDiv.appendChild(imageUrlLink);
+                }
+
+                const listItem = document.createElement('div');
+                listItem.appendChild(imageDiv);
+                listItem.appendChild(infoDiv);
+                submissionsList.appendChild(listItem);
             }
-
-            const listItem = document.createElement('li');
-            listItem.appendChild(imageDiv);
-            listItem.appendChild(infoDiv);
-            submissionsList.appendChild(listItem);
-          }
         }
 
-        const imageListElement       = document.querySelector('#image-list');
-        const imageUrlElement        = document.querySelector('#image-url');
-        const uploaderElement        = document.querySelector('#uploader');
-        const commentElement         = document.querySelector('#comment');
-        const deleteIdElement         = document.querySelector('#delete-id');
-        const deleteTokenElement         = document.querySelector('#delete-token');
-        const tokenElement           = document.querySelector('#token');
-        const submitButton           = document.querySelector('#submit');
-        const deleteButton           = document.querySelector('#delete');
+        const imageListElement = document.querySelector('#image-list');
+        const imageUrlElement = document.querySelector('#image-url');
+        const uploaderElement = document.querySelector('#uploader');
+        const commentElement = document.querySelector('#comment');
+        const deleteIdElement = document.querySelector('#delete-id');
+        const deleteTokenElement = document.querySelector('#delete-token');
+        const tokenElement = document.querySelector('#token');
+        const submitButton = document.querySelector('#submit');
+        const deleteButton = document.querySelector('#delete');
         const fetchSubmissionsButton = document.querySelector('#fetch-submissions');
 
         submitButton.addEventListener('click', async () => {
-          console.log('clicked');
-          const imageUrl         = imageUrlElement.value;
-          const uploader         = uploaderElement.value;
-          const comment          = commentElement.value;
-          const response         = await fetch(endpoint + '/submissions', {
-            body:   JSON.stringify({imageUrl, comment, uploader, id: 0}),
-            headers: { 'Content-Type': 'application/json' },
-            method: 'POST',
-          });
-          if (!response.ok) {
-            console.log(response.status, await response.text());
-            return;
-          }
-          const {token}          = await response.json();
-          tokenElement.innerText = token;
-          fetchSubmissionsButton.click();
+            console.log('clicked');
+            const imageUrl = imageUrlElement.value;
+            const uploader = uploaderElement.value;
+            const comment = commentElement.value;
+            const response = await fetch(endpoint + '/submissions', {
+                body: JSON.stringify({imageUrl, comment, uploader, id: 0}),
+                headers: {'Content-Type': 'application/json'},
+                method: 'POST',
+            });
+            if (!response.ok) {
+                console.log(response.status, await response.text());
+                return;
+            }
+            const {token} = await response.json();
+            tokenElement.innerText = token;
+            fetchSubmissionsButton.click();
         });
 
         fetchSubmissionsButton.addEventListener(
-          'click',
-          loadSubmissions.bind(null, endpoint + '/submissions', imageListElement),
+            'click',
+            loadSubmissions.bind(null, endpoint + '/submissions', imageListElement),
         );
 
         deleteButton.addEventListener('click', async () => {
-          const id = deleteIdElement.value;
-          const token = deleteTokenElement.value;
-          const response = await fetch(endpoint + '/submissions/' + id, {
-            body: JSON.stringify({ id, token, imageUrl: '', uploader: '', comment: '' }),
-            headers: { 'Content-Type': 'application/json' },
-            method: 'DELETE'
-          });
-          if (!response.ok) {
-            console.log('status code:', response.status);
-            console.log('body:', await response.text());
-          }
-          fetchSubmissionsButton.click();
+            const id = deleteIdElement.value;
+            const token = deleteTokenElement.value;
+            const response = await fetch(endpoint + '/submissions/' + id, {
+                body: JSON.stringify({id, token, imageUrl: '', uploader: '', comment: ''}),
+                headers: {'Content-Type': 'application/json'},
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                console.log('status code:', response.status);
+                console.log('body:', await response.text());
+            }
+            fetchSubmissionsButton.click();
         });
 
         fetchSubmissionsButton.click();
-      })();
-    </script>
-  </body>
+    })();
+</script>
+</body>
 </html>
