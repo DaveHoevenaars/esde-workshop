@@ -88,6 +88,19 @@ If you want to learn more about building native executables, please consult http
 ### Clone application
 Please visit https://github.com/codelakegmbh/esde-workshop and clone the repository.
 
+### Run application
+##### macOS and Linux
+```
+./mvnw quarkus:dev
+```
+##### Windows
+```
+mvnw.cmd compile quarkus:dev
+```
+
+##### Try application
+Visit <a href="http://127.0.0.1:8080">127.0.0.1:8080</a> to visit the web user interface for application testing.
+
 ### API Specification
 We have created an openAPI specification for this project describing all relevant endpoints of our sample application.
 You can find the specification at: <a href="https://shorturl.at/cdvwO">shorturl.at/cdvwO</a>
