@@ -280,10 +280,10 @@
         );
 
         deleteButton.addEventListener('click', async () => {
-            const id = deleteIdElement.value;
+            const id = parseInt(deleteIdElement.value);
             const token = deleteTokenElement.value;
             const response = await fetch(endpoint + '/submissions/' + id, {
-                body: JSON.stringify({id, token, imageUrl: '', uploader: '', comment: ''}),
+                body: JSON.stringify({submissionId: id, token, imageUrl: ' ', uploader: ' ', comment: ' '}),
                 headers: {'Content-Type': 'application/json'},
                 method: 'DELETE'
             });
