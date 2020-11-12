@@ -99,7 +99,7 @@ mvnw.cmd compile quarkus:dev
 ```
 
 ##### Try application
-Visit <a href="http://127.0.0.1:8080">127.0.0.1:8080</a> to visit the web user interface for application testing.
+Visit <a href="http://127.0.0.1:8080">127.0.0.1:8080</a> to view the web user interface for application testing.
 
 ### API Specification
 We have created an openAPI specification for this project describing all relevant endpoints of our sample application.
