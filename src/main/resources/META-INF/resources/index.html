@@ -95,6 +95,11 @@
          */
         async function loadSubmissions(endpoint, submissionsList) {
           const response            = await fetch(endpoint);
+          if (!response.ok) {
+            alert(`could not fetch images!<br>status code: ${response.status}`);
+            console.log(await response.text());
+            return;
+          }
           const submissions         = await response.json();
           submissionsList.innerHTML = '';
           console.log(submissions);
@@ -167,10 +172,14 @@
           const id = deleteIdElement.value;
           const token = deleteTokenElement.value;
           const response = await fetch(endpoint + '/submissions/' + id, {
-            body: JSON.stringify({ token }),
+            body: JSON.stringify({ token, imageUrl: '', uploader: '', comment: '' }),
             headers: { 'Content-Type': 'application/json' },
             method: 'DELETE'
           });
+          if (!response.ok) {
+            console.log('status code:', response.status);
+            console.log('body:', await response.text());
+          }
           fetchSubmissionsButton.click();
         });
 
