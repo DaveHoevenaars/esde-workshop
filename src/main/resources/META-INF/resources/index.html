@@ -145,9 +145,14 @@
           const uploader         = uploaderElement.value;
           const comment          = commentElement.value;
           const response         = await fetch(endpoint + '/submissions', {
-            body:   {imageUrl, comment, uploader, id: 0},
+            body:   JSON.stringify({imageUrl, comment, uploader, id: 0}),
+            headers: { 'Content-Type': 'application/json' },
             method: 'POST',
           });
+          if (!response.ok) {
+            console.log(response.status, await response.text());
+            return;
+          }
           const {token}          = await response.json();
           tokenElement.innerText = token;
           fetchSubmissionsButton.click();
@@ -162,7 +167,8 @@
           const id = deleteIdElement.value;
           const token = deleteTokenElement.value;
           const response = await fetch(endpoint + '/submissions/' + id, {
-            body: { token },
+            body: JSON.stringify({ token }),
+            headers: { 'Content-Type': 'application/json' },
             method: 'DELETE'
           });
           fetchSubmissionsButton.click();
