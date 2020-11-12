@@ -18,23 +18,29 @@ public class SubmissionResource {
     @DataSource("test")
     private AgroalDataSource defaultDataSource;
 
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Submission> index() throws SQLException {
-        List<Submission> submissions = new ArrayList<>();
-        PreparedStatement ps = this.runSQL("SELECT * FROM submissions;");
-        ResultSet rs = ps.getResultSet();
-        while (rs.next()) {
-            int id = rs.getInt(1);
-            String imageUrl = rs.getString(2);
-            String comment = rs.getString(3);
-            String uploader = rs.getString(4);
-            String token = rs.getString(5);
 
-            Submission submission = new Submission(id, imageUrl, comment, uploader, token);
-            submissions.add(submission);
+        try (Connection conn = defaultDataSource.getConnection()) {
+            List<Submission> submissions = new ArrayList<>();
+            PreparedStatement ps = this.runSQL(conn, "SELECT * FROM submissions;");
+            ResultSet rs = ps.getResultSet();
+            while (rs.next()) {
+                int id = rs.getInt(1);
+                String imageUrl = rs.getString(2);
+                String comment = rs.getString(3);
+                String uploader = rs.getString(4);
+                String token = rs.getString(5);
+
+                Submission submission = new Submission(id, imageUrl, comment, uploader, token);
+                submissions.add(submission);
+            }
+            return submissions;
         }
-        return submissions;
+
+
     }
 
     @POST
@@ -46,21 +52,24 @@ public class SubmissionResource {
         } catch (Exception e) {
             return Response.status(400).entity(e.getMessage()).build();
         }
-        String token = Token.generateToken();
-        submission.setToken(token);
-        PreparedStatement ps = this.runSQL(
-                "INSERT INTO submissions (imageUrl, comment, uploader, token) VALUES (?,?,?,?)",
-                new String[]{
-                        submission.getImageUrl(),
-                        submission.getComment(),
-                        submission.getUploader(),
-                        submission.getToken()
-                });
-        ResultSet rs = ps.getGeneratedKeys();
-        rs.next();
-        int index = rs.getInt(1);
-        submission.setSubmissionId(index);
-        return Response.status(201).entity(submission).build();
+        try (Connection conn = defaultDataSource.getConnection()) {
+            String token = Token.generateToken();
+            submission.setToken(token);
+            PreparedStatement ps = this.runSQL(conn,
+                    "INSERT INTO submissions (imageUrl, comment, uploader, token) VALUES (?,?,?,?)",
+                    new String[]{
+                            submission.getImageUrl(),
+                            submission.getComment(),
+                            submission.getUploader(),
+                            submission.getToken()
+                    });
+            ResultSet rs = ps.getGeneratedKeys();
+            rs.next();
+            int index = rs.getInt(1);
+            submission.setSubmissionId(index);
+            return Response.status(201).entity(submission).build();
+        }
+
     }
 
     @GET
@@ -68,19 +77,21 @@ public class SubmissionResource {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response view(@PathParam("id") int submissionId) throws SQLException {
-        PreparedStatement ps = this.runSQL("SELECT * FROM submissions WHERE id = ?;", new String[]{String.valueOf(submissionId)});
-        ResultSet rs = ps.getResultSet();
-        if (!rs.next()) {
-            return Response.status(404).build();
-        }
-        int id = rs.getInt(1);
-        String imageUrl = rs.getString(2);
-        String comment = rs.getString(3);
-        String uploader = rs.getString(4);
+        try (Connection conn = defaultDataSource.getConnection()) {
+            PreparedStatement ps = this.runSQL(conn, "SELECT * FROM submissions WHERE id = ?;", new String[]{String.valueOf(submissionId)});
+            ResultSet rs = ps.getResultSet();
+            if (!rs.next()) {
+                return Response.status(404).build();
+            }
+            int id = rs.getInt(1);
+            String imageUrl = rs.getString(2);
+            String comment = rs.getString(3);
+            String uploader = rs.getString(4);
 
-        return Response.status(200).entity(
-                new Submission(id, imageUrl, comment, uploader, null)
-        ).build();
+            return Response.status(200).entity(
+                    new Submission(id, imageUrl, comment, uploader, null)
+            ).build();
+        }
     }
 
     @PUT
@@ -93,40 +104,42 @@ public class SubmissionResource {
         } catch (Exception e) {
             return Response.status(400).entity(e.getMessage()).build();
         }
-        if (submissionId != submission.getSubmissionId()) {
-            return Response.status(400).type("text/plain")
-                    .entity("Bad request; Path ID does not match body ID").build();
+        try (Connection conn = defaultDataSource.getConnection()) {
+            if (submissionId != submission.getSubmissionId()) {
+                return Response.status(400).type("text/plain")
+                        .entity("Bad request; Path ID does not match body ID").build();
+            }
+
+            PreparedStatement checkToken = this.runSQL(conn,
+                    "SELECT token from submissions WHERE id = ?",
+                    new String[]{
+                            String.valueOf(submission.getSubmissionId())
+                    }
+            );
+
+            ResultSet rsTokenCheck = checkToken.getResultSet();
+
+            if (!rsTokenCheck.next()) {
+                return Response.status(404).build();
+            }
+
+            if (!rsTokenCheck.getString(1).equals(submission.getToken())) {
+                return Response.status(403).build();
+            }
+
+            PreparedStatement psInsert = this.runSQL(conn,
+                    "UPDATE submissions SET imageUrl = ?, comment = ?, uploader = ? WHERE id = ? AND token = ?",
+                    new String[]{
+                            submission.getImageUrl(),
+                            submission.getComment(),
+                            submission.getUploader(),
+                            String.valueOf(submission.getSubmissionId()),
+                            submission.getToken()
+                    }
+            );
+
+            return Response.status(200).entity(submission).build();
         }
-
-        PreparedStatement checkToken = this.runSQL(
-                "SELECT token from submissions WHERE id = ?",
-                new String[]{
-                        String.valueOf(submission.getSubmissionId())
-                }
-        );
-
-        ResultSet rsTokenCheck = checkToken.getResultSet();
-
-        if (!rsTokenCheck.next()) {
-            return Response.status(404).build();
-        }
-
-        if (!rsTokenCheck.getString(1).equals(submission.getToken())) {
-            return Response.status(403).build();
-        }
-
-        PreparedStatement psInsert = this.runSQL(
-                "UPDATE submissions SET imageUrl = ?, comment = ?, uploader = ? WHERE id = ? AND token = ?",
-                new String[]{
-                        submission.getImageUrl(),
-                        submission.getComment(),
-                        submission.getUploader(),
-                        String.valueOf(submission.getSubmissionId()),
-                        submission.getToken()
-                }
-        );
-
-        return Response.status(200).entity(submission).build();
     }
 
     @DELETE
@@ -139,35 +152,38 @@ public class SubmissionResource {
         } catch (Exception e) {
             return Response.status(400).entity(e.getMessage()).build();
         }
-        if (submissionId != submission.getSubmissionId()) {
-            return Response.status(400).type("text/plain")
-                    .entity("Bad request; Path ID does not match body ID").build();
+        try (Connection conn = defaultDataSource.getConnection()) {
+            if (submissionId != submission.getSubmissionId()) {
+                return Response.status(400).type("text/plain")
+                        .entity("Bad request; Path ID does not match body ID").build();
+            }
+
+            PreparedStatement checkToken = this.runSQL(conn,
+                    "SELECT token from submissions WHERE id = ?",
+                    new String[]{
+                            String.valueOf(submission.getSubmissionId())
+                    }
+            );
+
+            ResultSet rsTokenCheck = checkToken.getResultSet();
+
+            if (!rsTokenCheck.next()) {
+                return Response.status(404).build();
+            }
+
+            if (!rsTokenCheck.getString(1).equals(submission.getToken())) {
+                return Response.status(403).build();
+            }
+
+            PreparedStatement psDelete = this.runSQL(conn,
+                    "DELETE FROM submissions WHERE id = ?",
+                    new String[]{
+                            String.valueOf(submission.getSubmissionId()),
+                    }
+            );
+            return Response.status(200).entity(submission).build();
         }
 
-        PreparedStatement checkToken = this.runSQL(
-                "SELECT token from submissions WHERE id = ?",
-                new String[]{
-                        String.valueOf(submission.getSubmissionId())
-                }
-        );
-
-        ResultSet rsTokenCheck = checkToken.getResultSet();
-
-        if (!rsTokenCheck.next()) {
-            return Response.status(404).build();
-        }
-
-        if (!rsTokenCheck.getString(1).equals(submission.getToken())) {
-            return Response.status(403).build();
-        }
-
-        PreparedStatement psDelete = this.runSQL(
-                "DELETE FROM submissions WHERE id = ?",
-                new String[]{
-                        String.valueOf(submission.getSubmissionId()),
-                }
-        );
-        return Response.status(200).entity(submission).build();
     }
 
     public void validateSubmission(Submission submission, String method) throws Exception {
@@ -193,12 +209,11 @@ public class SubmissionResource {
         }
     }
 
-    public PreparedStatement runSQL(String sql) throws SQLException {
-        return this.runSQL(sql, new String[0]);
+    public PreparedStatement runSQL(Connection conn, String sql) throws SQLException {
+        return this.runSQL(conn, sql, new String[0]);
     }
 
-    public PreparedStatement runSQL(String sql, String[] params) throws SQLException {
-        Connection conn = defaultDataSource.getConnection();
+    public PreparedStatement runSQL(Connection conn, String sql, String[] params) throws SQLException {
         PreparedStatement preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
         for (int i = 0; i < params.length; i++) {
